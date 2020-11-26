@@ -1,5 +1,6 @@
-import React, { useState, createContext } from 'react';
+import React, { useState, createContext, FunctionComponentElement } from 'react';
 import classNames from 'classnames'
+import { MenuItemProps } from './menuItem';
 
 
 type MenuMode = 'horizontal' | 'vertical'
@@ -25,7 +26,8 @@ const Menu: React.FC<MenuProps> = (props) => {
   const [currentActive, setActive] = useState(defaultIndex)
 
   const classes = classNames('qf-menu', className, {
-    'menu-vertical': mode === 'vertical'
+    'menu-vertical': mode === 'vertical',
+    'menu-horizontal': mode !== 'vertical',
   })
   const handleClick = (index: number) => {
     setActive(index)
@@ -39,10 +41,24 @@ const Menu: React.FC<MenuProps> = (props) => {
     onSelect: handleClick
   }
 
+  const renderChildren = () => {
+    return React.Children.map(children, (child, index) => {
+      const childElement = child as FunctionComponentElement<MenuItemProps>
+      const { displayName } = childElement.type
+      if (displayName === 'menuItem' || displayName === 'subMenu') {
+        return React.cloneElement(childElement, {
+          index
+        })
+      } else {
+        console.error('Warning: Menu has a child which is not a MenuItem component')
+      }
+    })
+  }
+
   return (
     <ul className={classes} style={style} data-testid="test-menu">
       <MenuContext.Provider value={passedCotext}>
-        {children}
+        {renderChildren()}
       </MenuContext.Provider>
     </ul>
   )
@@ -50,7 +66,7 @@ const Menu: React.FC<MenuProps> = (props) => {
 
 Menu.defaultProps = {
   defaultIndex: 0,
-  mode: 'vertical'
+  mode: 'horizontal'
 }
 
 export default Menu
